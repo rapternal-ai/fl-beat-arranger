@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { validateRequest } from "../lib/api";
 import { generateArrangement } from "../lib/engine/generator";
+import { validatePlan } from "../lib/engine/validator";
 import { ArrangementRequest } from "../lib/schema";
 
 const westCoast = (): ArrangementRequest =>
@@ -17,7 +18,7 @@ function activeRoles(plan: ReturnType<typeof generateArrangement>, startBar: num
 }
 
 describe("constraint invariants across seeds 0-999", () => {
-  const plans = Array.from({ length: 200 }, (_, seed) => generateArrangement({ ...westCoast(), seed }));
+  const plans = Array.from({ length: 1000 }, (_, seed) => generateArrangement({ ...westCoast(), seed }));
 
   it("never removes kick and snare together in a verse block", () => {
     for (const plan of plans) {
@@ -51,7 +52,7 @@ describe("constraint invariants across seeds 0-999", () => {
 
   it("no more than two consecutive verse blocks share a dropout combination", async () => {
     const { computeGrid } = await import("../lib/engine/generator");
-    for (let seed = 0; seed < 200; seed++) {
+    for (let seed = 0; seed < 1000; seed++) {
       const req = { ...westCoast(), seed };
       const { rows } = computeGrid(req);
       const combos = [1, 2, 3, 4].map((b) =>
@@ -92,5 +93,36 @@ describe("constraint invariants across seeds 0-999", () => {
   it("different seeds may differ but every block stays non-empty", () => {
     const signatures = new Set(plans.map((p) => JSON.stringify(p.placements.map((x) => x.id))));
     expect(signatures.size).toBeGreaterThan(1);
+    for (const plan of plans) {
+      for (let b = 0; b < 7; b++) {
+        expect(plan.placements.some((p) => p.startBar === b * 4)).toBe(true);
+      }
+    }
+  });
+});
+
+describe("validatePlan rejects tampered plans", () => {
+  it("rejects unknown channel references", () => {
+    const plan = generateArrangement(westCoast());
+    plan.placements[0].channelId = "ghost";
+    expect(() => validatePlan(plan)).toThrow(/unknown channel/);
+  });
+
+  it("rejects misaligned startBar", () => {
+    const plan = generateArrangement(westCoast());
+    plan.placements[0].startBar = 5;
+    expect(() => validatePlan(plan)).toThrow();
+  });
+
+  it("rejects a wrong sectionId", () => {
+    const plan = generateArrangement(westCoast());
+    plan.placements[0].sectionId = "hook";
+    expect(() => validatePlan(plan)).toThrow(/sectionId/);
+  });
+
+  it("rejects overrides referencing unknown channels", () => {
+    const plan = generateArrangement(westCoast());
+    plan.overrides.push({ channelId: "ghost", startBar: 0, active: true });
+    expect(() => validatePlan(plan)).toThrow(/unknown channel/);
   });
 });

@@ -84,8 +84,8 @@ describe("generateArrangement", () => {
     expect(JSON.stringify(a.transitions)).toBe(JSON.stringify(b.transitions));
   });
 
-  it("keeps all invariants across many seeds", () => {
-    for (let seed = 0; seed < 200; seed++) {
+  it("keeps all invariants across seeds 0-999", () => {
+    for (let seed = 0; seed < 1000; seed++) {
       const plan = generateArrangement({ ...westCoast(), seed });
       expect(() => validatePlan(plan)).not.toThrow();
       // never an empty block

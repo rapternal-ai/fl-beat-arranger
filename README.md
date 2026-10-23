@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FL Studio Beat Arranger (MVP)
 
-## Getting Started
+Turns a producer's existing **4-bar FL Studio Channel Rack pattern** into a reproducible, editable **28-bar arrangement plan** — 4-bar intro + 16-bar verse + 8-bar hook — plus a step-by-step manual Playlist placement guide.
 
-First, run the development server:
+**Product principle:** arrange the producer's existing music; never generate or replace musical material. The app never reads or writes `.flp` files, plugins, Mixer inserts, or the Playlist.
+
+## Requirements
+
+- Node.js ≥ 20.9 (developed on Node 24)
+- FL Studio (any edition with Playlist) for the manual steps — no plugin or API access needed
+
+## Run locally
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev          # http://localhost:3000
+npm test             # Vitest unit/constraint tests
+npm run typecheck    # tsc --noEmit
+npm run lint         # eslint
+npm run test:e2e     # Playwright E2E (needs `npx playwright install` once)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Workflow
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. In FL Studio, save a copy of the project, verify the source pattern is exactly 4 bars in 4/4, then use **Channel Rack → Split by channel**.
+2. Enter the resulting pattern names in the app (or import a JSON/CSV manifest) and confirm each channel's role, priority, and `can drop` flag.
+3. **Generate Arrangement** → a 7-block grid (Intro 1–4, Verse 5–20, Hook 21–28). Same manifest + seed ⇒ identical plan.
+4. Toggle cells to override; the sidebar explains each decision and lists manual transition suggestions.
+5. Export `arrangement.json`, `arrangement.csv`, and `playlist-guide.md`, then place the listed **native Pattern Clips** in the FL Studio Playlist by hand.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Details: [docs/FL-STUDIO-WORKFLOW.md](docs/FL-STUDIO-WORKFLOW.md) ·
+limitations: [docs/INTEGRATION-LIMITATIONS.md](docs/INTEGRATION-LIMITATIONS.md) ·
+future automation: [docs/FUTURE-ADAPTERS.md](docs/FUTURE-ADAPTERS.md)
 
-## Learn More
+## Architecture
 
-To learn more about Next.js, take a look at the following resources:
+```
+lib/schema.ts        Zod contracts: ArrangementRequest → ArrangementPlan
+lib/engine/          Pure deterministic engine (no React/DOM/FS/FL deps)
+  rng.ts             mulberry32 seeded PRNG
+  rules.ts           baseline role policy table, block constants
+  generator.ts       computeGrid / generateArrangement / applyOverrides
+  overrides.ts       cell override helpers
+  validator.ts       post-generation invariant checks
+lib/exporters/       arrangement.json / arrangement.csv / playlist-guide.md
+lib/manifests/       JSON+CSV manifest parsing, name→role suggestions
+components/          Manifest editor, controls, timeline grid, exports
+app/page.tsx         Client-only UI; state persisted to localStorage
+tests/               Vitest suites + Playwright workflow spec
+fixtures/            west-coast-loop.json, percussion-only.json
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Key invariants enforced by the engine and tested across seeds: clips are 4 bars at 4-bar-aligned positions referencing only enabled channels; kick and snare are never removed together in a verse block; ≤1 bass and ≤1 hi-hat removal in the verse; hooks are at least as dense as the densest verse block; `canDrop=false` channels are never randomly removed; transition entries are suggestions (`requiresManualEdit: true`), never applied edits.

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1.0",
+  "title": "Percussion Only",
+  "tempoBpm": 100,
+  "beatsPerBar": 4,
+  "sourceBars": 4,
+  "sections": [
+    { "id": "intro", "bars": 4 },
+    { "id": "verse", "bars": 16 },
+    { "id": "hook", "bars": 8 }
+  ],
+  "variation": "medium",
+  "enableDrumBassDropouts": true,
+  "enableTransitionSuggestions": true,
+  "seed": 7,
+  "channels": [
+    { "id": "perc", "patternName": "Congas", "role": "percussion", "enabled": true, "priority": "accent", "canDrop": true }
+  ]
+}

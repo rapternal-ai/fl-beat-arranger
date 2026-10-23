@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0",
+  "title": "West Coast Loop 01",
+  "tempoBpm": 94,
+  "beatsPerBar": 4,
+  "sourceBars": 4,
+  "sections": [
+    { "id": "intro", "bars": 4 },
+    { "id": "verse", "bars": 16 },
+    { "id": "hook", "bars": 8 }
+  ],
+  "variation": "medium",
+  "enableDrumBassDropouts": true,
+  "enableTransitionSuggestions": true,
+  "seed": 42,
+  "channels": [
+    { "id": "kick", "patternName": "Kick", "role": "kick", "enabled": true, "priority": "core", "canDrop": true },
+    { "id": "snare", "patternName": "Snare", "role": "snare", "enabled": true, "priority": "core", "canDrop": false },
+    { "id": "hats", "patternName": "Hats", "role": "hihat", "enabled": true, "priority": "support", "canDrop": true },
+    { "id": "bass", "patternName": "808", "role": "bass", "enabled": true, "priority": "core", "canDrop": true },
+    { "id": "keys", "patternName": "Piano", "role": "melody", "enabled": true, "priority": "core", "canDrop": false },
+    { "id": "pad", "patternName": "Pad", "role": "pad", "enabled": true, "priority": "support", "canDrop": true },
+    { "id": "perc", "patternName": "Perc", "role": "percussion", "enabled": true, "priority": "accent", "canDrop": true }
+  ]
+}
